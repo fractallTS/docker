@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevOps E-commerce Store</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .product { border: 1px solid #ddd; padding: 20px; margin: 10px; border-radius: 5px; }
+        .info { background: #f0f8ff; padding: 15px; margin: 15px 0; border-radius: 5px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .healthy { background: #d4edda; color: #155724; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>Automatic Deployment - E-commerce Stack</h2>
+        <p>This application was deployed automatically using vagrant</p>
+        <div id="health-status" class="status"></div>
+    </div>
+    
+    <h1>Products</h1>
+    
+    <div>
+        <h3>Add New Product</h3>
+        <input type="text" id="productName" placeholder="Product name">
+        <input type="number" id="productPrice" placeholder="Price" step="0.01">
+        <button onclick="addProduct()">Add Product</button>
+    </div>
+    
+    <div id="products"></div>
+
+    <script>
+        // Check health status
+        fetch('/health')
+            .then(response => response.json())
+            .then(data => {
+                const healthDiv = document.getElementById('health-status');
+                healthDiv.className = 'status healthy';
+                healthDiv.innerHTML = `
+                    <strong>Status:</strong> ${data.status} | 
+                    <strong>Database:</strong> ${data.database} | 
+                    <strong>Redis:</strong> ${data.redis} | 
+                    <strong>Nginx:</strong> ${data.nginx}
+                `;
+            });
+
+        // Load products
+        function loadProducts() {
+            fetch('/products')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('products');
+                    container.innerHTML = `<p><strong>Data source:</strong> ${data.source}</p>`;
+                    
+                    data.data.forEach(product => {
+                        const div = document.createElement('div');
+                        div.className = 'product';
+                        div.innerHTML = `
+                            <h3>${product.name}</h3>
+                            <p>Price: $${product.price}</p>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        // Add new product
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = document.getElementById('productPrice').value;
+            
+            fetch('/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, price })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Product added!');
+                document.getElementById('productName').value = '';
+                document.getElementById('productPrice').value = '';
+                loadProducts(); // Reload products
+            });
+        }
+
+        // Initial load
+        loadProducts();
+    </script>
+</body>
+</html>
