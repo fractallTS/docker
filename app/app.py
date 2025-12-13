@@ -82,6 +82,51 @@ def add_product():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/products/<int:product_id>', methods=['PUT'])
+def update_product(product_id):
+    data = request.get_json()
+    name = data.get('name')
+    price = data.get('price')
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            'UPDATE products SET name = %s, price = %s WHERE id = %s;',
+            (name, price, product_id)
+        )
+        if cur.rowcount == 0:
+            return jsonify({"error": "Product not found"}), 404
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Invalidate cache
+        redis_client.delete('products')
+        
+        return jsonify({"message": "Product updated", "id": product_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/products/<int:product_id>', methods=['DELETE'])
+def delete_product(product_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('DELETE FROM products WHERE id = %s;', (product_id,))
+        if cur.rowcount == 0:
+            return jsonify({"error": "Product not found"}), 404
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Invalidate cache
+        redis_client.delete('products')
+        
+        return jsonify({"message": "Product deleted", "id": product_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/health')
 def health_check():
     try:

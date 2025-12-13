@@ -21,10 +21,12 @@
     <h1>Products</h1>
     
     <div>
-        <h3>Add New Product</h3>
+        <h3 id="formTitle">Add New Product</h3>
+        <input type="hidden" id="productId">
         <input type="text" id="productName" placeholder="Product name">
         <input type="number" id="productPrice" placeholder="Price" step="0.01">
-        <button onclick="addProduct()">Add Product</button>
+        <button id="submitButton" onclick="submitProduct()">Add Product</button>
+        <button id="cancelButton" onclick="cancelEdit()" style="display:none;">Cancel</button>
     </div>
     
     <div id="products"></div>
@@ -58,19 +60,25 @@
                         div.innerHTML = `
                             <h3>${product.name}</h3>
                             <p>Price: $${product.price}</p>
+                            <button onclick="editProduct(${product.id}, '${product.name}', ${product.price})">Edit</button>
+                            <button onclick="deleteProduct(${product.id})">Delete</button>
                         `;
                         container.appendChild(div);
                     });
                 });
         }
 
-        // Add new product
-        function addProduct() {
+        // Submit product (add or update)
+        function submitProduct() {
+            const id = document.getElementById('productId').value;
             const name = document.getElementById('productName').value;
             const price = document.getElementById('productPrice').value;
             
-            fetch('/products', {
-                method: 'POST',
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/products/${id}` : '/products';
+            
+            fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -78,11 +86,52 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert('Product added!');
-                document.getElementById('productName').value = '';
-                document.getElementById('productPrice').value = '';
-                loadProducts(); // Reload products
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(id ? 'Product updated!' : 'Product added!');
+                    cancelEdit();
+                    loadProducts(); // Reload products
+                }
             });
+        }
+
+        // Edit product
+        function editProduct(id, name, price) {
+            document.getElementById('productId').value = id;
+            document.getElementById('productName').value = name;
+            document.getElementById('productPrice').value = price;
+            document.getElementById('formTitle').textContent = 'Edit Product';
+            document.getElementById('submitButton').textContent = 'Update Product';
+            document.getElementById('cancelButton').style.display = 'inline';
+        }
+
+        // Delete product
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                fetch(`/products/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        alert('Product deleted!');
+                        loadProducts(); // Reload products
+                    }
+                });
+            }
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            document.getElementById('productId').value = '';
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('formTitle').textContent = 'Add New Product';
+            document.getElementById('submitButton').textContent = 'Add Product';
+            document.getElementById('cancelButton').style.display = 'none';
         }
 
         // Initial load
