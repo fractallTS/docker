@@ -1,0 +1,24 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_DB_FILE: /run/secrets/db_name
+    secrets: 
+      - db_password
+      - db_user
+      - db_name
+    ports:
+      - "5432:5432"
+
+secrets:
+  db_password:
+    file: secrets/db_password
+  db_user:
+    file: secrets/db_user
+  db_name:
+    file: secrets/db_name 

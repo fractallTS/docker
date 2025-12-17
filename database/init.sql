@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-GRANT ALL PRIVILEGES ON TABLE products TO ecomuser;
+GRANT ALL PRIVILEGES ON TABLE products TO CURRENT_USER;
 
 -- Insert sample data
 INSERT INTO products (name, price) VALUES 
