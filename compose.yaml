@@ -1,9 +1,11 @@
 services:
   db:
     build:
-      context: .
+      context: /database
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       POSTGRES_USER_FILE: /run/secrets/db_user
@@ -12,8 +14,49 @@ services:
       - db_password
       - db_user
       - db_name
-    ports:
+    ports:  # Samo za testiranje lokalno
       - "5432:5432"
+  app:
+    build:
+      context: /app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      DB_USER_FILE: /run/secrets/db_user
+      DB_NAME_FILE: /run/secrets/db_name
+      DB_HOST: db
+      REDIS_HOST: redis
+    secrets:
+      - db_password
+      - db_user
+      - db_name
+    ports:
+      - "5000:5000"
+    # depends_on:
+    #   - db
+    #   - redis
+  nginx:
+    build:
+      context: /html
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DOMAIN_FILE: /run/secrets/domain 
+    secrets:
+      - domain
+    ports:
+      - "80:80"
+      - "443:443"
+    # depends_on:
+    #   - app
+  redis:
+    build:
+      context: /redis
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
 secrets:
   db_password:
@@ -21,4 +64,9 @@ secrets:
   db_user:
     file: secrets/db_user
   db_name:
-    file: secrets/db_name 
+    file: secrets/db_name
+  domain:
+    file: secrets/domain
+
+volumes:
+  db_data:

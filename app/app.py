@@ -8,11 +8,11 @@ import os
 app = Flask(__name__)
 
 # Database configuration
-DB_HOST = os.getenv('DB_HOST', '192.168.123.46')
+DB_HOST = os.getenv('DB_HOST', 'db')
 DB_NAME = os.getenv('DB_NAME', 'ecommerce')
 DB_USER = os.getenv('DB_USER', 'ecomuser')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'securepassword123')
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
 # timeouts (seconds) for quick health checks
 DB_CONNECT_TIMEOUT = int(os.getenv('DB_CONNECT_TIMEOUT', '3'))
 REDIS_CONNECT_TIMEOUT = float(os.getenv('REDIS_CONNECT_TIMEOUT', '3'))
@@ -21,7 +21,7 @@ def get_db_connection():
     return psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, connect_timeout=DB_CONNECT_TIMEOUT)
 
 # Redis configuration
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True, socket_connect_timeout=REDIS_CONNECT_TIMEOUT)
+redis_client = redis.Redis(host=REDIS_HOST, port=6379, db=0, decode_responses=True, socket_connect_timeout=REDIS_CONNECT_TIMEOUT)
 
 @app.route('/')
 def home():
