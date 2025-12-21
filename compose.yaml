@@ -63,12 +63,7 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    environment:
-      DOMAIN_FILE: /run/secrets/domain 
     command: certonly --test-cert --webroot -w /var/www/certbot --non-interactive --keep-until-expiring --agree-tos --register-unsafely-without-email -d "2jz.space" 
-    secrets:
-      - domain
-
 
 secrets:
   db_password:
