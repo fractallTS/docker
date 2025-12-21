@@ -1,11 +1,11 @@
 services:
   db:
     build:
-      context: /database
+      context: ./database
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       POSTGRES_USER_FILE: /run/secrets/db_user
@@ -18,7 +18,7 @@ services:
       - "5432:5432"
   app:
     build:
-      context: /app
+      context: ./app
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
@@ -33,30 +33,26 @@ services:
       - db_name
     ports:
       - "5000:5000"
-    # depends_on:
-    #   - db
-    #   - redis
+    depends_on:
+       - db
+       - redis
   nginx:
     build:
-      context: /html
+      context: ./html
       dockerfile: Dockerfile
     restart: unless-stopped
-    environment:
-      DOMAIN_FILE: /run/secrets/domain 
-    secrets:
-      - domain
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./html/nginx.conf:/etc/nginx/nginx.conf #:ro
+      - ./html/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    # depends_on:
-    #   - app
+    depends_on:
+      - app
   redis:
     build:
-      context: /redis
+      context: ./redis
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -67,7 +63,9 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --test-cert --webroot -w /var/www/certbot --non-interactive --keep-until-expiring --agree-tos --register-unsafely-without-email -d "$(cat secrets/domain)" 
+    environment:
+      DOMAIN_FILE: /run/secrets/domain 
+    command: certonly --test-cert --webroot -w /var/www/certbot --non-interactive --keep-until-expiring --agree-tos --register-unsafely-without-email -d "2jz.space" 
     secrets:
       - domain
 
@@ -79,8 +77,6 @@ secrets:
     file: secrets/db_user
   db_name:
     file: secrets/db_name
-  domain:
-    file: secrets/domain
 
 volumes:
   db_data:
