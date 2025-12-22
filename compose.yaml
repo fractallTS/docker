@@ -14,8 +14,7 @@ services:
       - db_password
       - db_user
       - db_name
-    ports:  # Samo za testiranje lokalno
-      - "5432:5432"
+
   app:
     build:
       context: ./app
@@ -31,11 +30,10 @@ services:
       - db_password
       - db_user
       - db_name
-    ports:
-      - "5000:5000"
     depends_on:
        - db
        - redis
+
   nginx:
     build:
       context: ./html
@@ -50,17 +48,13 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - app
+
   redis:
-    build:
-      context: ./redis
-      dockerfile: Dockerfile
+    image: redis:latest
     restart: unless-stopped
-    ports:
-      - "6379:6379"
 
   certbot:
     image: certbot/dns-cloudflare:latest
-    restart: unless-stopped
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./secrets/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
