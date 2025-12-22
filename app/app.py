@@ -7,11 +7,19 @@ import os
 
 app = Flask(__name__)
 
+def get_secret(env_var, default=None):
+    """Get secret from file if *_FILE env var is set, otherwise from env var."""
+    file_path = os.getenv(f'{env_var}_FILE')
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            return f.read().strip()
+    return os.getenv(env_var, default)
+
 # Database configuration
 DB_HOST = os.getenv('DB_HOST', 'db')
-DB_NAME = os.getenv('DB_NAME', 'ecommerce')
-DB_USER = os.getenv('DB_USER', 'ecomuser')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'securepassword123')
+DB_NAME = get_secret('DB_NAME', 'ecommerce')
+DB_USER = get_secret('DB_USER', 'ecomuser')
+DB_PASSWORD = get_secret('DB_PASSWORD', 'securepassword123')
 REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
 # timeouts (seconds) for quick health checks
 DB_CONNECT_TIMEOUT = int(os.getenv('DB_CONNECT_TIMEOUT', '3'))
