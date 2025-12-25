@@ -60,7 +60,6 @@ services:
       - ./secrets/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
     command: >
       certonly 
-      --test-cert
       --dns-cloudflare
       --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
       --dns-cloudflare-propagation-seconds 30
