@@ -12,8 +12,8 @@ permissions:
   packages: write
 
 env:
-  IMAGE_OWNER: ${{ github.repository_owner }}
-  IMAGE_BASE: ${{ github.event.repository.name }}
+  IMAGE_OWNER: ${{ toLower(github.repository_owner) }}
+  IMAGE_BASE: ${{ toLower(github.event.repository.name) }}
 
 jobs:
   build-and-push:
