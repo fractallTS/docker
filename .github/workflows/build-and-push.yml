@@ -11,9 +11,8 @@ permissions:
   contents: read
   packages: write
 
-env:
-  IMAGE_OWNER: ${{ toLower(github.repository_owner) }}
-  IMAGE_BASE: ${{ toLower(github.event.repository.name) }}
+# IMAGE_OWNER and IMAGE_BASE are set in a step (lowercased) because
+# GitHub expressions do not provide a built-in lowercase function.
 
 jobs:
   build-and-push:
@@ -25,6 +24,15 @@ jobs:
       - name: Set short SHA
         id: vars
         run: echo "SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Set image owner/base (lowercase)
+        id: image_vars
+        run: |
+          # GITHUB_REPOSITORY is owner/repo
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          BASE="${GITHUB_REPOSITORY##*/}"
+          echo "IMAGE_OWNER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_BASE=$(echo "$BASE" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
