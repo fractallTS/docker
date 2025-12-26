@@ -1,4 +1,4 @@
-FROM postgres:latest
+FROM postgres:17
 RUN apt-get update
 RUN apt-get install -y postgresql-contrib
 COPY init.sql /docker-entrypoint-initdb.d/

@@ -1,0 +1,17 @@
+[Unit]
+Description=Docker Compose: E-commerce stack
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=notify
+Restart=always
+WorkingDirectory=/home/ubuntu/DevOps/docker
+EnvironmentFile=/home/ubuntu/DevOps/docker/.env
+ExecStart=/usr/bin/docker compose -f /home/ubuntu/DevOps/docker/compose.yaml up --remove-orphans
+ExecStop=/usr/bin/docker compose -f /home/ubuntu/DevOps/docker/compose.yaml down
+TimeoutStartSec=0
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
