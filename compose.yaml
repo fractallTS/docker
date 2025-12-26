@@ -5,7 +5,12 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - db_data:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       POSTGRES_USER_FILE: /run/secrets/db_user
@@ -16,6 +21,7 @@ services:
       - db_name
 
   app:
+    image: ghcr.io/${GITHUB_OWNER:-owner}/${GITHUB_REPO:-repo}-app:latest
     build:
       context: ./app
       dockerfile: Dockerfile
@@ -33,8 +39,15 @@ services:
     depends_on:
        - db
        - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   nginx:
+    image: ghcr.io/${GITHUB_OWNER:-owner}/${GITHUB_REPO:-repo}-html:latest
     build:
       context: ./html
       dockerfile: Dockerfile
@@ -48,10 +61,22 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - app
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:latest
     restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   certbot:
     image: certbot/dns-cloudflare:latest
@@ -69,6 +94,19 @@ services:
       --register-unsafely-without-email 
       -d "2jz.space" 
 
+  certbot-renew:
+    # Removed docker socket mount for security. Use the host systemd timer
+    # or cron to run renewal commands (see docs/systemd.md) instead of
+    # granting the container access to the Docker socket.
+    image: alpine:3.18
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/workspace/certbot/conf:rw
+      - ./secrets/cloudflare.ini:/workspace/secrets/cloudflare.ini:ro
+      - ./certbot/renew-loop.sh:/workspace/certbot/renew-loop.sh:ro
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "/workspace/certbot/renew-loop.sh"]
+
 secrets:
   db_password:
     file: secrets/db_password
@@ -79,3 +117,4 @@ secrets:
 
 volumes:
   db_data:
+  redis_data:
